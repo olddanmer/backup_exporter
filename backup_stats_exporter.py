@@ -137,9 +137,9 @@ def get_data_from_log_file():
 
 
 
-last_backup_start_time_metric = Gauge('last_backup_start_time', 'Time of start last backup')
-last_backup_end_time_metric = Gauge('last_backup_end_time', 'Time of end last backup')
-last_backup_duration_time_metric = Gauge('last_backup_duration_time', 'Duration time of last backup')
+bucket_backup_start_time_metric = Gauge('bucket_backup_start_time', 'Time of start last backup')
+bucket_backup_end_time_metric = Gauge('bucket_backup_end_time', 'Time of end last backup')
+#bucket_backup_duration_time_metric = Gauge('bucket_backup_duration_time', 'Duration time of last backup')
 
 bucket_backup_duration_times_metric = Gauge('bucket_backup_duration_times', 'Duration times of particular bucket backup', ['bucket_name'])
 bucket_backup_transferred_files_metric = Gauge('bucket_backup_transferred_files', 'Number of file, transferred while bucket backup', ['bucket_name'])
@@ -156,10 +156,9 @@ while True:
     get_data_from_log_file()
 
 
-    last_backup_duration_time_metric.set(backup_time.seconds)
-    #last_backup_start_time_metric.set(backup_start_string)
-    last_backup_start_time_metric.set(int((backup_start_datetime - datetime.datetime.utcfromtimestamp(0)).total_seconds()))
-    last_backup_end_time_metric.set(int((backup_end_datetime - datetime.datetime.utcfromtimestamp(0)).total_seconds()))
+#    bucket_backup_duration_time_metric.set(backup_time.seconds)
+    bucket_backup_start_time_metric.set(int((backup_start_datetime - datetime.datetime.utcfromtimestamp(0)).total_seconds()))
+    bucket_backup_end_time_metric.set(int((backup_end_datetime - datetime.datetime.utcfromtimestamp(0)).total_seconds()))
 
     for bucket in buckets_list:
         #print(bucket['backup_time'])
