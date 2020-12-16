@@ -1,0 +1,11 @@
+[Unit]
+Description=Prometheus exporter for backup statistics data
+
+[Service]
+Type=simple
+ExecStart=/etc/local/backup_stats_exporter.py
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+
