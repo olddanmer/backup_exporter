@@ -13,7 +13,8 @@ buckets_list = []
 backup_start_string = ''
 backup_end_string = ''
 backup_time = datetime.timedelta(seconds=0)
-
+backup_start_datetime = datetime.datetime.now()
+backup_end_datetime = datetime.datetime.now()
 
 def get_bytes(size):
     if size == "0":
@@ -39,6 +40,8 @@ def get_data_from_log_file():
     global backup_start_string
     global backup_end_string
     global backup_time
+    global backup_start_datetime
+    global backup_end_datetime
 
     buckets_list = []
     backup_start_string = ''
@@ -155,6 +158,8 @@ while True:
 
     last_backup_duration_time_metric.set(backup_time.seconds)
     #last_backup_start_time_metric.set(backup_start_string)
+    last_backup_start_time_metric.set(int((backup_start_datetime - datetime.datetime.utcfromtimestamp(0)).total_seconds()))
+    last_backup_end_time_metric.set(int((backup_end_datetime - datetime.datetime.utcfromtimestamp(0)).total_seconds()))
 
     for bucket in buckets_list:
         #print(bucket['backup_time'])
