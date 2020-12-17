@@ -2,7 +2,7 @@
 #
 #
 
-import datetime
+from datetime import datetime, timedelta
 import time
 import os
 import re
@@ -12,9 +12,12 @@ from prometheus_client import Gauge, start_http_server
 buckets_list = []
 backup_start_string = ''
 backup_end_string = ''
-backup_time = datetime.timedelta(seconds=0)
-backup_start_datetime = datetime.datetime.now()
-backup_end_datetime = datetime.datetime.now()
+backup_time = timedelta(seconds=0)
+backup_start_datetime = datetime.now()
+backup_end_datetime = datetime.now()
+cur_time = time.time()
+local_utc_offset_time_sec = (datetime.fromtimestamp(cur_time) - datetime.utcfromtimestamp(cur_time)).total_seconds()
+
 
 def get_bytes(size):
     if size == "0":
@@ -46,7 +49,7 @@ def get_data_from_log_file():
     buckets_list = []
     backup_start_string = ''
     backup_end_string = ''
-    backup_time = datetime.timedelta(seconds=0)
+    backup_time = timedelta(seconds=0)
 
     ## get last backup log from whole log file
     in_log_file = open('/var/log/backup_arh/minio_backup-last.log','r')
@@ -74,11 +77,11 @@ def get_data_from_log_file():
     for line in last_backup_log:
         if "minio_backup.sh: Job started at" in line:
             backup_start_string = re.search('[0-9][0-9][0-9][0-9].[0-9][0-9].[0-9][0-9] [0-9][0-9]:[0-9][0-9]:[0-9][0-9]', line).group(0)
-            backup_start_datetime = datetime.datetime.strptime(backup_start_string, "%Y.%m.%d %H:%M:%S")
+            backup_start_datetime = datetime.strptime(backup_start_string, "%Y.%m.%d %H:%M:%S")
 
         if "minio_backup.sh: Job finished" in line:
             backup_end_string = re.search('[0-9][0-9][0-9][0-9].[0-9][0-9].[0-9][0-9] [0-9][0-9]:[0-9][0-9]:[0-9][0-9]', line).group(0)
-            backup_end_datetime = datetime.datetime.strptime(backup_end_string, "%Y.%m.%d %H:%M:%S")
+            backup_end_datetime = datetime.strptime(backup_end_string, "%Y.%m.%d %H:%M:%S")
 
     backup_time = backup_end_datetime - backup_start_datetime
 
@@ -91,7 +94,7 @@ def get_data_from_log_file():
     for line in last_backup_log:
         if "minio_backup.sh: Start syncing bucket" in line:
             bucket_start_time_string = re.search('[0-9][0-9][0-9][0-9].[0-9][0-9].[0-9][0-9] [0-9][0-9]:[0-9][0-9]:[0-9][0-9]', line).group(0)
-            bucket_start_time_datetime = datetime.datetime.strptime(bucket_start_time_string, "%Y.%m.%d %H:%M:%S")
+            bucket_start_time_datetime = datetime.strptime(bucket_start_time_string, "%Y.%m.%d %H:%M:%S")
             bucket_name = re.split(r'[\s]', line)[4][1:][:-1]
             bucket_checked = 0
             bucket_checked_total = 0
@@ -109,7 +112,7 @@ def get_data_from_log_file():
 
         if "minio_backup.sh: Finished syncing bucket" in line:
             bucket_end_time_string = re.search('[0-9][0-9][0-9][0-9].[0-9][0-9].[0-9][0-9] [0-9][0-9]:[0-9][0-9]:[0-9][0-9]', line).group(0)
-            bucket_end_time_datetime = datetime.datetime.strptime(bucket_end_time_string, "%Y.%m.%d %H:%M:%S")
+            bucket_end_time_datetime = datetime.strptime(bucket_end_time_string, "%Y.%m.%d %H:%M:%S")
 
             bucket_time = bucket_end_time_datetime - bucket_start_time_datetime
 
@@ -157,8 +160,8 @@ while True:
 
 
 #    bucket_backup_duration_time_metric.set(backup_time.seconds)
-    bucket_backup_start_time_metric.set(int((backup_start_datetime - datetime.datetime.utcfromtimestamp(0)).total_seconds()))
-    bucket_backup_end_time_metric.set(int((backup_end_datetime - datetime.datetime.utcfromtimestamp(0)).total_seconds()))
+    bucket_backup_start_time_metric.set(int((backup_start_datetime - datetime.utcfromtimestamp(0)).total_seconds()) - local_utc_offset_time_sec)
+    bucket_backup_end_time_metric.set(int((backup_end_datetime - datetime.utcfromtimestamp(0)).total_seconds()) - local_utc_offset_time_sec)
 
     for bucket in buckets_list:
         #print(bucket['backup_time'])
